@@ -1,5 +1,6 @@
 # Earthquake Mashup
 
+
 ## Introduction
 
 Way back in 2006, when
@@ -18,6 +19,7 @@ added more data feeds from the European counterpart
 widget](https://www.simile-widgets.org/timeline/) developed for MIT's
 [SIMILE Widgets project](https://www.simile-widgets.org/), the mashup
 was completed.
+
 
 ## Downfall
 
@@ -50,3 +52,45 @@ to rewrite the Mashup to use another mapping service, I have released
 the code to the mashup to the public - well, most of it is HTML and
 JavaScript, so it was not really well hidden in the first place...
 
+
+## The Future?
+
+As you already guessed, I have no intention to continue this
+project. Replacing Google Maps with e.g. OpenStreetMaps is only part of
+the job to make it fit for another decade or two. The timeline widget is
+long overdue and not working properly any more on most mobile
+devices. My hack for importing the RSS feeds has probably better
+alternatives these days. If you are a web developer in search for a
+weekend project: Don't hesitate, go ahead, this is your project now.
+
+
+## How to install the Earthquake Mashup
+
+### Core Web Application
+
+The core of the Earthquake Mashup consists of the files `eqmashup.html`,
+`eqmashup.js` and `eqmashup.css`. In addition, you need the directories
+`icons` and `icons_exp` in the same directory on your web server.
+
+If you want to recreate the icons, you can use the Shell script
+`mkicons.sh` and `mkicons_exp.sh`. You will need the programs
+[xfig](https://mcj.sourceforge.net/) (more precisely `fig2dev`) and the
+[NetPBM](https://en.wikipedia.org/wiki/Netpbm) tools. They will convert
+the template `icon.fig` into various versions.
+
+### SIMILE Timeline
+
+The code for the SIMILE Timeline widget used to be hosted on MIT's
+servers, but changed home a few times. Download the latest version
+(2.3.1) from the [developer's Git
+repository](https://github.com/simile-widgets/timeline) and place it in
+`/simile-widgets/timeline/2.3.1/` on your web server.
+
+### Earthquake Data RSS feeds
+
+In order to deal with the same-origin policy
+([SOP](https://en.wikipedia.org/wiki/Same-origin_policy)), my solution
+in 2006 was to proxy the RSS feeds from the USGS and other providers
+through my own web server. `httpd-fragment.txt` contains some Rewrite
+rules for the Apache web server, they are probably easily adapted for
+other servers like nginx.
