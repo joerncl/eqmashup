@@ -50,7 +50,7 @@ case. So the Earthquake Mashup is no longer usable, at least not the way
 I intended it to be used.
 
 As I have still no intention to pay Google, and I do not have the time
-to rewrite the Mashup to use another mapping service, I have released
+to rewrite the mashup to use another mapping service, I have released
 the code to the mashup to the public - well, most of it is HTML and
 JavaScript, so it was not really well hidden in the first place...
 
@@ -58,12 +58,14 @@ JavaScript, so it was not really well hidden in the first place...
 ## The Future?
 
 As you already guessed, I have no intention to continue this
-project. Replacing Google Maps with e.g. OpenStreetMaps is only part of
-the job to make it fit for another decade or two. The timeline widget is
-long overdue and not working properly any more on most mobile
-devices. My hack for importing the RSS feeds has probably better
-alternatives these days. If you are a web developer in search for a
-weekend project: Don't hesitate, go ahead, this is your project now.
+project. Replacing Google Maps with
+e.g. [OpenStreetMap](https://wiki.openstreetmap.org/wiki/Raster_tile_providers)
+is only part of the job to make the Earthquake Mashup fit for another
+decade or two. The timeline widget is long overdue and not working
+properly any more on most mobile devices. My hack for importing the RSS
+feeds has probably better alternatives these days. If you are a web
+developer in search for a weekend project: Don't hesitate, go ahead,
+this is your project now.
 
 
 ## How to install the Earthquake Mashup
