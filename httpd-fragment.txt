@@ -1,0 +1,9 @@
+    <IfModule rewrite_module>
+        RewriteEngine on
+        RewriteRule ^/ajxp/usgseq-feed.xml http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom [L,P]
+        RewriteRule ^/ajxp/usgseq5-feed.xml http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.atom [L,P]
+        RewriteRule ^/ajxp/usgseq-1day-feed.xml http://earthquake.usgs.gov/eqcenter/catalogs/eqs1day-M2.5.xml [L,P]
+        RewriteRule ^/ajxp/emsceq-feed.xml https://www.emsc-csem.org/service/rss/rss.php?typ=emsc [L,P]
+        RewriteRule ^/ajxp/gfzeq-feed.xml http://geofon.gfz-potsdam.de/eqinfo/list.php?fmt=rss [L,P]
+    </IfModule>
+
