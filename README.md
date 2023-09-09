@@ -18,7 +18,9 @@ added more data feeds from the European counterpart
 [GFZ](https://www.emsc-csem.org/). With the addition of a [timeline
 widget](https://www.simile-widgets.org/timeline/) developed for MIT's
 [SIMILE Widgets project](https://www.simile-widgets.org/), the mashup
-was completed.
+was completed. Since 2013 it was available at
+
+> https://www.oe-files.de/gmaps/eqmashup.html
 
 
 ## Downfall
