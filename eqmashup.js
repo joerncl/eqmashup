@@ -504,7 +504,7 @@ function createMarkerCL(point,offset,url,title,html,date,age) {
         .setLngLat(point)
         .addTo(map);
 
-    marker.getElement().style.zIndex = Math.round(10000 - age * 100);
+    // marker.getElement().style.zIndex = Math.round(10000 - age * 100);
 
     var popup = new maplibregl.Popup({
             offset: offset,
