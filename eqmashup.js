@@ -53,19 +53,42 @@ function initMashup() {
         document.getElementById('timeline').style.height = document.documentElement.clientHeight / 4;
     }
 
-    // initialise Google Maps
-    mapOptions = {
-        center: new google.maps.LatLng(0, 0),
-        zoom: 4,
-        mapTypeId: google.maps.MapTypeId.TERRAIN,
-        disableDefaultUI: true,
-        zoomControl: true,
-        mapTypeControl: true
-    };
-    map = new google.maps.Map(document.getElementById("map"),mapOptions);
-    google.maps.event.addListener(map, "click", function() {
+    // initialise MapLibre GL map with OpenStreetMap data
+    map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            sources: {
+                'osm': {
+                    type: 'raster',
+                    tiles: [
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    ],
+                    tileSize: 256,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+                }
+            },
+            layers: [
+                {
+                    id: 'osm',
+                    type: 'raster',
+                    source: 'osm',
+                    minzoom: 0,
+                    maxzoom: 19
+                }
+            ]
+        },
+        center: [0, 0],
+        zoom: 3,
+        attributionControl: false
+    });
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+
+    map.on('click', function() {
         if (lastinfowindow) {
-            lastinfowindow.close();
+            lastinfowindow.remove();
+            lastinfowindow = null;
         }
     });
 
@@ -95,9 +118,12 @@ function initMashup() {
     timeline = Timeline.create(document.getElementById("timeline"), bandInfos);
     // hijack popup window callback to show earthquake
     Timeline.OriginalEventPainter.prototype._showBubble = function(x, y, evt) {
-        google.maps.event.trigger(evt.marker, 'click');
-        map.panTo(evt.marker.getPosition());
-    }
+        var marker = evt ? (evt.marker || (evt[0] && evt[0].marker)) : null;
+        if (marker) {
+            marker.openPopup();
+            map.panTo(marker.getLngLat());
+        }
+    };
 
     // load feed when map and timeline are initialized, but custom
     // controlls are not put in place. this looks weird, but was the
@@ -109,8 +135,7 @@ function initMashup() {
     window.onresize = onResize;
 }
 
-// Google API documentation says, this should go here instead as onload event...
-google.maps.event.addDomListener(window, 'load', initMashup);
+window.addEventListener('load', initMashup);
 
 function loadInitialFeed() {
     // don't use cookies until further notice...
@@ -130,9 +155,13 @@ function loadInitialFeed() {
     // }
 }
 
-// add additional buttons to Google Maps, see GM API docs for more information
+// add additional buttons to map
 function makeButtons() {
     var container = document.createElement('div');
+    container.className = 'maplibregl-ctrl';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'row';
+    container.style.flexWrap = 'wrap';
     var buttons = document.getElementById('buttons');
     for (var i = 0; i < feeds.length; i++) {
         makeButton(feeds[i],buttons,container);
@@ -143,13 +172,20 @@ function makeButtons() {
     container.appendChild(follow);
     var info = buttons.removeChild(document.getElementById('info'));
     container.appendChild(info);
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(container);
+    map.addControl({
+        onAdd: function() { return container; },
+        onRemove: function() {
+            if (container.parentNode) {
+                container.parentNode.removeChild(container);
+            }
+        }
+    }, 'bottom-right');
 }
 
 function makeButton(feed, buttons, container) {
     var button = buttons.removeChild(document.getElementById(feed));
     container.appendChild(button);
-    google.maps.event.addDomListener(button, 'click', function() {
+    button.addEventListener('click', function() {
             switchFeed(feed);
         });
 }
@@ -188,8 +224,12 @@ function switchFeed(newfeed) {
 
 function loadFeed() {
     // clean map and timeline and reload everything
-    for (var i in markers) {
-        markers[i].setMap(null);
+    if (lastinfowindow) {
+        lastinfowindow.remove();
+        lastinfowindow = null;
+    }
+    for (var i = 0; i < markers.length; i++) {
+        markers[i].remove();
     }
     markers = [];
     events = [];
@@ -302,7 +342,7 @@ function parseUSGS (item) {
     var latlonarray = latlonpat.exec(latlon);
     var lat = latlonarray[1];
     var lon = latlonarray[2];
-    eq.pos = new google.maps.LatLng(parseFloat(lat), parseFloat(lon));
+    eq.pos = [parseFloat(lon), parseFloat(lat)];
     try {
         var depth = item.getElementsByTagName('elev')[0].firstChild.data;
     } catch (e) {
@@ -348,7 +388,7 @@ function parseEMSC (item) {
         var lat = item.getElementsByTagName('geo:lat')[0].firstChild.data;
         var lon = item.getElementsByTagName('geo:long')[0].firstChild.data;
     }
-    eq.pos = new google.maps.LatLng(parseFloat(lat), parseFloat(lon));
+    eq.pos = [parseFloat(lon), parseFloat(lat)];
     try {
         var depth = item.getElementsByTagName('depth')[0].firstChild.data;
     } catch (e) {
@@ -376,7 +416,7 @@ function parseGFZ (item) {
         eq.date = date;
         var lat = dateposdeparray[7];
         var lon = dateposdeparray[8];
-        eq.pos = new google.maps.LatLng(parseFloat(lat), parseFloat(lon));
+        eq.pos = [parseFloat(lon), parseFloat(lat)];
 	eq.depth = dateposdeparray[9] + ' km';
     }
     var titlepat = /^M\s+([\d\.]*),\s+(\w.*)/;
@@ -423,7 +463,7 @@ function createMarker (point, date, magstring, location, depth, link) {
               '<div>Time: '+date.toGMTString()+'</div>'+
               '<div><a target="_blank" href="'+link+'">more information</a></div>';
     var title = magstring+' '+location;
-    marker = createMarkerCL(point, iconcenter, url, title, html, date, age);
+    var marker = createMarkerCL(point, iconcenter, url, title, html, date, age);
 
     // create a color coded marker on the timeline
     var color = 'green';
@@ -447,27 +487,59 @@ function createMarker (point, date, magstring, location, depth, link) {
 }
 
 function createMarkerCL(point,offset,url,title,html,date,age) {
-    var anchor = new google.maps.Point(offset,offset);
-    var icon = new google.maps.MarkerImage(url,null,null,anchor);
-    var marker = new google.maps.Marker({
-            position: point,
-            anchorPoint: new google.maps.Point(0,0),
-            map: map,
-            title: title,
-            icon: icon,
-            zindex: -age
-        });
-    var infowindow = new google.maps.InfoWindow({
-            content: html
-        });
-    google.maps.event.addListener(marker, "click", function() {
-            if (lastinfowindow) {
-                lastinfowindow.close();
-            }
-            infowindow.open(map,marker);
-            timeline.getBand(0).scrollToCenter(date);
-            lastinfowindow = infowindow;
-        });
+    var img = document.createElement('img');
+    img.src = url;
+    img.title = title;
+    img.alt = title;
+    var size = Math.round(offset * 2);
+    img.style.width = size + 'px';
+    img.style.height = size + 'px';
+    img.style.display = 'block';
+    img.style.cursor = 'pointer';
+
+    var marker = new maplibregl.Marker({
+            element: img,
+            anchor: 'center'
+        })
+        .setLngLat(point)
+        .addTo(map);
+
+    // marker.getElement().style.zIndex = Math.round(10000 - age * 100);
+
+    var popup = new maplibregl.Popup({
+            offset: offset,
+            closeButton: true,
+            closeOnClick: false
+        })
+        .setHTML(html);
+
+    function openThisPopup() {
+        if (lastinfowindow && lastinfowindow !== popup) {
+            lastinfowindow.remove();
+        }
+        if (!popup.isOpen()) {
+            popup.setLngLat(point).addTo(map);
+        }
+        timeline.getBand(0).scrollToCenter(date);
+        lastinfowindow = popup;
+    }
+
+    img.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openThisPopup();
+    });
+
+    popup.on('close', function() {
+        if (lastinfowindow === popup) {
+            lastinfowindow = null;
+        }
+    });
+
+    marker.openPopup = openThisPopup;
+    marker.getPosition = function() {
+        return marker.getLngLat();
+    };
+
     return(marker);
 }
 
@@ -475,6 +547,9 @@ function createMarkerCL(point,offset,url,title,html,date,age) {
 function onResize() {
     if (isIE) {
         document.getElementById('timeline').style.height = document.documentElement.clientHeight / 4;
+    }
+    if (map) {
+        map.resize();
     }
     if (resizeTimerID == null) {
         resizeTimerID = window.setTimeout(function() {
