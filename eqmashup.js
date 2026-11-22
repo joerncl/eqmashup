@@ -1,10 +1,9 @@
 var map = null;
 var markers = [];
 
-var feeds = ['usgs25','usgs5','emsc','gfz'];
+var feeds = ['usgs25','usgs5','gfz'];
 var urls = { 'usgs25' : 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.atom',
              'usgs5'  : 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.atom',
-             'emsc'   : '/ajxp/emsceq-feed.xml',
              'gfz'    : '/ajxp/gfzeq-feed.xml'
 };
 
@@ -266,9 +265,6 @@ function showFeed() {
                 case 'usgs5':
                     eq = parseUSGS(items[i]);
                     break;
-                case 'emsc':
-                    eq = parseEMSC(items[i]);
-                    break;
                 case 'gfz':
                     eq = parseGFZ(items[i]);
                     break;
@@ -349,52 +345,6 @@ function parseUSGS (item) {
         var depth = item.getElementsByTagName('georss:elev')[0].firstChild.data;
     }
     eq.depth = Math.round(depth/100)/10+' km';
-    return(eq);
-}
-
-function parseEMSC (item) {
-    // parse the EMSC feed
-    // sometimes, essential data like the magnitude is missing
-    var eq = {};
-    try {
-        var datestring = item.getElementsByTagName('time')[0].firstChild.data;
-    } catch (e) {
-        var datestring = item.getElementsByTagName('emsc:time')[0].firstChild.data;
-    }
-    var datepat = /^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+):(\d+).*/;
-    var datearray = datepat.exec(datestring);
-    if (datearray) {
-        var date = new Date;
-        date.setUTCFullYear(datearray[1]);
-        date.setUTCMonth(datearray[2]-1);
-        date.setUTCDate(datearray[3]);
-        date.setUTCHours(datearray[4]);
-        date.setUTCMinutes(datearray[5]);
-        date.setUTCSeconds(datearray[6]);
-        eq.date = date;
-    }
-    var titlepat = /^\w+\s+([\d\.]*)\s+(\w.*)/;
-    var titlestring = item.getElementsByTagName('title')[0].firstChild.data;
-    var titlearray = titlepat.exec(titlestring);
-    if (titlearray) {
-        eq.mag = titlearray[1];
-        eq.loc = titlearray[2];
-    }
-    eq.link = item.getElementsByTagName('link')[0].firstChild.data;
-    try {
-        var lat = item.getElementsByTagName('lat')[0].firstChild.data;
-        var lon = item.getElementsByTagName('long')[0].firstChild.data;
-    } catch (e) {
-        var lat = item.getElementsByTagName('geo:lat')[0].firstChild.data;
-        var lon = item.getElementsByTagName('geo:long')[0].firstChild.data;
-    }
-    eq.pos = [parseFloat(lon), parseFloat(lat)];
-    try {
-        var depth = item.getElementsByTagName('depth')[0].firstChild.data;
-    } catch (e) {
-        var depth = item.getElementsByTagName('emsc:depth')[0].firstChild.data;
-    }
-    eq.depth = depth.replace(/ *$/,'') + ' km';
     return(eq);
 }
 
